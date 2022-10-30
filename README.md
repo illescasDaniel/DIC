@@ -39,7 +39,7 @@ DIContainer.save(OtherDependency())
 
     // if the value doesn't conform to the specified type, it will throw a COMPILATION error
 DIContainer.save(
-    DefaultUserRepository(otherDependency: DIContainer.load())
+    DefaultUserRepository(otherDependency: DIContainer.load()),
     as: UserRepository.self
 )
 ```
