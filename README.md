@@ -63,7 +63,8 @@ MyView(
             somethingHere: Z
         )
 	)
-)` 
+)
+``` 
 to 
 ```swift
 MyView(dependency: diContainer.load())
