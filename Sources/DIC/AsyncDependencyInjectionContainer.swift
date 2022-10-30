@@ -7,6 +7,7 @@
 
 import Foundation
 
+@available(iOS 13, macOS 10.15, watchOS 6, tvOS 13, *)
 public class AsyncDependencyInjectionContainer {
 
 	public enum InjectionLoadError: Error {
