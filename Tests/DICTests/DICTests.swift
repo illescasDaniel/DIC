@@ -51,6 +51,9 @@ final class DICTests: XCTestCase {
 	}
 	
 	func testProtocolSaveAndLoadAutoclosure() {
+
+		// DependencyInjectionContainer.save(Example3(value: 3), as: Int.self) if the `objectBuilder` return type doesn't conform to the `desiredType`, it will throw a compilation error :)
+
 		DependencyInjectionContainer.save(Example3(value: 3), as: ExampleProtocol.self)
 		let exampleProtocolValue: ExampleProtocol = DependencyInjectionContainer.load()
 		XCTAssertEqual(exampleProtocolValue.value, 3)
