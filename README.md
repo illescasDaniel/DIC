@@ -62,7 +62,7 @@ MyView(
         otherOtherDependency: OmgAnotherOne(
             somethingHere: Z
         )
-	)
+    )
 )
 ``` 
 to 
