@@ -6,25 +6,25 @@ A super small library for easy dependency injection for Swift.
 ```swift
 // save your dependency (how to build it)
 DependencyInjectionContainer.save {
-	Example1(value: 1)
+    Example1(value: 1)
 }
 
-// build it
+// load it (building it each time)
 let example1: Example1 = DependencyInjectionContainer.load()
 XCTAssertEqual(example1.value, 1)
-	// or like this:
+    // or like this:
 let example1_1 = DependencyInjectionContainer.load(Example1.self)
 XCTAssertEqual(example1_1.value, 1)
 ```
 
-```
-// You can also do this, which will use an autoclosure
+```swift
+// You can also do this, which will use an autoclosure (so it will NOT create an object right now)
 DependencyInjectionContainer.save(Example1(value: 2))
 ```
 
 ## Save dependencies as protocol types
 
-```
+```swift
 class OtherDependency { /* ... */ }
 
 protocol UserRepository { /* ... */ }
@@ -37,10 +37,10 @@ typealias DIContainer = DependencyInjectionContainer
 
 DIContainer.save(OtherDependency())
 
-	// if the value doesn't conform to the specified type, it will throw a COMPILATION error
+    // if the value doesn't conform to the specified type, it will throw a COMPILATION error
 DIContainer.save(
-	DefaultUserRepository(otherDependency: DIContainer.load())
-	as: UserRepository.self
+    DefaultUserRepository(otherDependency: DIContainer.load())
+    as: UserRepository.self
 )
 ```
 
