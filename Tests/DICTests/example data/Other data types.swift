@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Other data types.swift
 //  
 //
 //  Created by Daniel Illescas Romero on 30/10/22.
