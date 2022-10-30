@@ -54,7 +54,7 @@ MyView(userRepository: diContainer.load())
 - This dependency injection library supports other data types such as structs, enum values, actors, async classes (`AsyncDependencyInjectionContainer`), classes with nullable constructors (failable initializers), classes with throwing constructors, etc.
 - You can register your dependencies in the AppDelegate or inside your App class in SwiftUI.
 - You should probably have only one container, but you can create as many as you like.
-- You need almost no modifications to existing code that uses normal dependency injection, simply replace the initializers call from something like :
+- You need almost no modifications to existing code that uses normal dependency injection, simply register all the dependencies in a place like the app delegate and then replace the initializers call from something like :
 ```swift
 MyView(
     dependency: Dependency(
