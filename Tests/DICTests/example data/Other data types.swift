@@ -8,7 +8,7 @@
 import Foundation
 
 struct VerySpecificData {
-	let name: String
+	var name: String
 }
 
 enum MyColor {

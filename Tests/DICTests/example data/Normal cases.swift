@@ -8,7 +8,7 @@
 import Foundation
 
 class Example1 {
-	let value: Int
+	var value: Int
 	init(value: Int) {
 		self.value = value
 	}
