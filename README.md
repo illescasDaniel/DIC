@@ -50,6 +50,22 @@ MyView(userRepository: diContainer.load())
   userRepository.XYZ()
 ```
 
+## 'Singleton' support
+```swift
+// Simply use `registerSingleton` to save the dependency inside the container. It should always be 'alive' as long as the container is. 
+diContainer.registerSingleton(
+	HTTPClientImpl(
+		urlSession: URLSession(configuration: .ephemeral),
+		interceptors: [diContainer.load(MockRequestHTTPInterceptor.self), RequestLoggerHTTPInterceptor()]
+	),
+	as: HTTPClient.self
+)
+
+// Every time the load method is called, the exact same object will be returned.
+// This is different than registering your dependencies with "register".
+let httpClient = diContainer.load(HTTPClient.self)
+```
+
 ### Other stuff
 - This dependency injection library supports other data types such as structs, enum values, actors, async classes (`AsyncDependencyInjectionContainer`), classes with nullable constructors (failable initializers), classes with throwing constructors, etc.
 - You can register your dependencies in the AppDelegate or inside your App class in SwiftUI.
