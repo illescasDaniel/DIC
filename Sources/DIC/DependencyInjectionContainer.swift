@@ -30,6 +30,7 @@ public class DependencyInjectionContainer {
 
 	private var objects: [ObjectIdentifier: () -> Any] = [:]
 	private var objectsThatCanThrow: [ObjectIdentifier: () throws -> Any] = [:]
+	private var singletonObjects: [ObjectIdentifier: Any] = [:]
 
 	public init() {}
 
@@ -49,6 +50,13 @@ public class DependencyInjectionContainer {
 		registerThrowable(objectBuilder, as: desiredType)
 	}
 
+	public func registerSingleton<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) {
+		singletonObjects[ObjectIdentifier(desiredType)] = objectBuilder()
+	}
+	public func registerSingleton<T>(_ objectBuilder: @autoclosure @escaping () -> T, as desiredType: T.Type = T.self) {
+		registerSingleton(objectBuilder, as: desiredType)
+	}
+
 	public func load<T>(_ type: T.Type = T.self) -> T {
 		if let object = loadOrNil(type) {
 			return object
@@ -56,7 +64,9 @@ public class DependencyInjectionContainer {
 		fatalError("[ERROR] DIC: cannot find dependency")
 	}
 	public func loadOrThrow<T>(_ type: T.Type = T.self) throws -> T {
-		if let f = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)], let value = f() as? T {
+		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)], let value = singletonObject as? T {
+			return value
+		} else if let f = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)], let value = f() as? T {
 			return value
 		} else if let f = objectsThatCanThrow[ObjectIdentifier(T.self)] ?? objectsThatCanThrow[ObjectIdentifier(Optional<T>.self)], let value = try f() as? T {
 			return value
@@ -64,7 +74,9 @@ public class DependencyInjectionContainer {
 		throw InjectionLoadError.cannotFindDependency
 	}
 	public func loadOrNil<T>(_ type: T.Type = T.self) -> T? {
-		if let objectBuilder = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)]{
+		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)], let value = singletonObject as? T {
+			return value
+		} else if let objectBuilder = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)] {
 			return objectBuilder() as? T
 		} else if let objectBuilder = objectsThatCanThrow[ObjectIdentifier(T.self)] ?? objectsThatCanThrow[ObjectIdentifier(Optional<T>.self)] {
 			return (try? objectBuilder()) as? T

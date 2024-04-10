@@ -88,6 +88,42 @@ final class DICTests: XCTestCase {
 		XCTAssertEqual(data2.value, 90)
 	}
 
+	func testSaveLoadWithSingletonClassAutoclosure() {
+		let diContainer = DependencyInjectionContainer()
+		diContainer.registerSingleton(Example1(value: 1))
+		let example1: Example1 = diContainer.load()
+		XCTAssertEqual(example1.value, 1)
+
+		example1.value = 90
+		XCTAssertEqual(example1.value, 90)
+
+		let example1_1 = diContainer.load(Example1.self)
+		XCTAssertEqual(example1_1.value, 90)
+		let data1: Example1 = diContainer.load()
+		XCTAssertEqual(data1.value, 90)
+		let data2 = diContainer.load(Example1.self)
+		XCTAssertEqual(data2.value, 90)
+	}
+
+	func testSaveLoadWithSingletonClassWithClosure() {
+		let diContainer = DependencyInjectionContainer()
+		diContainer.registerSingleton {
+			Example1(value: 1)
+		}
+		let example1: Example1 = diContainer.load()
+		XCTAssertEqual(example1.value, 1)
+
+		example1.value = 90
+		XCTAssertEqual(example1.value, 90)
+
+		let example1_1 = diContainer.load(Example1.self)
+		XCTAssertEqual(example1_1.value, 90)
+		let data1: Example1 = diContainer.load()
+		XCTAssertEqual(data1.value, 90)
+		let data2 = diContainer.load(Example1.self)
+		XCTAssertEqual(data2.value, 90)
+	}
+
 	func testSaveLoadWithAutoclosureMini() {
 		let diContainer = MiniDependencyInjectionContainer()
 		diContainer.register(Example1(value: 2))

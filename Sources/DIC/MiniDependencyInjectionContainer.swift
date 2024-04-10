@@ -32,7 +32,6 @@ public class MiniDependencyInjectionContainer {
 	public func register<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) {
 		objects[ObjectIdentifier(desiredType)] = objectBuilder
 	}
-	
 	public func register<T>(_ objectBuilder: @autoclosure @escaping () -> T, as desiredType: T.Type = T.self) {
 		register(objectBuilder, as: desiredType)
 	}
@@ -40,7 +39,6 @@ public class MiniDependencyInjectionContainer {
 	public func registerSingleton<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) {
 		singletonObjects[ObjectIdentifier(desiredType)] = objectBuilder()
 	}
-
 	public func registerSingleton<T>(_ objectBuilder: @autoclosure @escaping () -> T, as desiredType: T.Type = T.self) {
 		registerSingleton(objectBuilder, as: desiredType)
 	}
@@ -48,8 +46,7 @@ public class MiniDependencyInjectionContainer {
 	public func load<T>(_ type: T.Type = T.self) -> T {
 		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)], let object = singletonObject as? T {
 			return object
-		}
-		if let objectBuilder = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)], let object = objectBuilder() as? T {
+		} else if let objectBuilder = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)], let object = objectBuilder() as? T {
 			return object
 		}
 		fatalError("[ERROR] DIC: cannot find dependency")
