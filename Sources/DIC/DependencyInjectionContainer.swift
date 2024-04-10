@@ -22,7 +22,7 @@
 
 import Foundation
 
-public class DependencyInjectionContainer {
+public final class DependencyInjectionContainer {
 
 	public enum InjectionLoadError: Error {
 		case cannotFindDependency

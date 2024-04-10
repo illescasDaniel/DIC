@@ -22,7 +22,7 @@
 
 import Foundation
 
-public class MiniDependencyInjectionContainer {
+public final class MiniDependencyInjectionContainer {
 
 	private var objects: [ObjectIdentifier: () -> Any] = [:]
 	private var singletonObjects: [ObjectIdentifier: Any] = [:]
