@@ -31,10 +31,14 @@ public final class DependencyInjectionContainer {
 	private var objects: [ObjectIdentifier: () -> Any] = [:]
 	private var objectsThatCanThrow: [ObjectIdentifier: () throws -> Any] = [:]
 	private var singletonObjects: [ObjectIdentifier: Any] = [:]
+	private let lock = NSLock()
 
 	public init() {}
 
 	public func register<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) {
+		lock.lock()
+		defer { lock.unlock() }
+
 		checkType(T.self)
 		objects[ObjectIdentifier(desiredType)] = objectBuilder
 	}
@@ -43,6 +47,9 @@ public final class DependencyInjectionContainer {
 	}
 
 	public func registerThrowable<T>(_ objectBuilder: @escaping () throws -> T, as desiredType: T.Type = T.self) {
+		lock.lock()
+		defer { lock.unlock() }
+
 		checkType(T.self)
 		objectsThatCanThrow[ObjectIdentifier(desiredType)] = objectBuilder
 	}
@@ -51,6 +58,9 @@ public final class DependencyInjectionContainer {
 	}
 
 	public func registerSingleton<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) {
+		lock.lock()
+		defer { lock.unlock() }
+
 		singletonObjects[ObjectIdentifier(desiredType)] = objectBuilder()
 	}
 	public func registerSingleton<T>(_ objectBuilder: @autoclosure @escaping () -> T, as desiredType: T.Type = T.self) {
@@ -64,6 +74,9 @@ public final class DependencyInjectionContainer {
 		fatalError("[ERROR] DIC: cannot find dependency")
 	}
 	public func loadOrThrow<T>(_ type: T.Type = T.self) throws -> T {
+		lock.lock()
+		defer { lock.unlock() }
+
 		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)], let value = singletonObject as? T {
 			return value
 		} else if let f = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)], let value = f() as? T {
@@ -74,6 +87,9 @@ public final class DependencyInjectionContainer {
 		throw InjectionLoadError.cannotFindDependency
 	}
 	public func loadOrNil<T>(_ type: T.Type = T.self) -> T? {
+		lock.lock()
+		defer { lock.unlock() }
+
 		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)], let value = singletonObject as? T {
 			return value
 		} else if let objectBuilder = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)] {
@@ -85,15 +101,24 @@ public final class DependencyInjectionContainer {
 	}
 
 	public func unregisterDependencies(keepingCapacity: Bool = false) {
+		lock.lock()
+		defer { lock.unlock() }
+
 		objects.removeAll(keepingCapacity: keepingCapacity)
 		objectsThatCanThrow.removeAll(keepingCapacity: keepingCapacity)
 	}
 
 	public func dependencies() -> [ObjectIdentifier: () -> Any] {
+		lock.lock()
+		defer { lock.unlock() }
+
 		return objects
 	}
 
 	public func throwableDependencies() -> [ObjectIdentifier: () throws -> Any] {
+		lock.lock()
+		defer { lock.unlock() }
+		
 		return objectsThatCanThrow
 	}
 

@@ -44,10 +44,10 @@ public actor SendableMiniDependencyInjectionContainer {
 
 	public func load<T>(_ type: T.Type = T.self) -> T {
 		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)],
-			let object = singletonObject as? T {
+		   let object = singletonObject as? T {
 			return object
 		} else if let objectBuilder = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)],
-					let object = objectBuilder() as? T {
+				  let object = objectBuilder() as? T {
 			return object
 		}
 		fatalError("[ERROR] DIC: cannot find dependency")

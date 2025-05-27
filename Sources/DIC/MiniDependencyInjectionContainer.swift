@@ -26,37 +26,65 @@ public final class MiniDependencyInjectionContainer {
 
 	private var objects: [ObjectIdentifier: () -> Any] = [:]
 	private var singletonObjects: [ObjectIdentifier: Any] = [:]
+	private let lock = NSLock()
 
 	public init() {}
 
 	public func register<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) {
+		lock.lock()
+		defer { lock.unlock() }
+
 		objects[ObjectIdentifier(desiredType)] = objectBuilder
 	}
+
 	public func register<T>(_ objectBuilder: @autoclosure @escaping () -> T, as desiredType: T.Type = T.self) {
 		register(objectBuilder, as: desiredType)
 	}
 
 	public func registerSingleton<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) {
+		lock.lock()
+		defer { lock.unlock() }
+
 		singletonObjects[ObjectIdentifier(desiredType)] = objectBuilder()
 	}
+
 	public func registerSingleton<T>(_ objectBuilder: @autoclosure @escaping () -> T, as desiredType: T.Type = T.self) {
 		registerSingleton(objectBuilder, as: desiredType)
 	}
 
 	public func load<T>(_ type: T.Type = T.self) -> T {
-		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)], let object = singletonObject as? T {
+		lock.lock()
+		defer { lock.unlock() }
+
+		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)],
+		   let object = singletonObject as? T {
 			return object
-		} else if let objectBuilder = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)], let object = objectBuilder() as? T {
+		} else if let objectBuilder = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)],
+				  let object = objectBuilder() as? T {
 			return object
 		}
 		fatalError("[ERROR] DIC: cannot find dependency")
 	}
 
 	public func unregisterDependencies(keepingCapacity: Bool = false) {
+		lock.lock()
+		defer { lock.unlock() }
+
 		objects.removeAll(keepingCapacity: keepingCapacity)
 	}
 
 	public func dependencies() -> [ObjectIdentifier: () -> Any] {
+		lock.lock()
+		defer { lock.unlock() }
+		
 		return objects
+	}
+
+	// Additional method to clear singletons if needed
+	public func unregisterSingletons(keepingCapacity: Bool = false) {
+		lock.lock()
+		defer { lock.unlock() }
+
+		singletonObjects.removeAll(keepingCapacity: keepingCapacity)
 	}
 }
