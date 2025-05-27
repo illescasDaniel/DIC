@@ -24,3 +24,15 @@ class Example3: ExampleProtocol {
 		self.value = value
 	}
 }
+
+
+protocol ExampleProtocolSendable: Sendable {
+	var value: Int { get }
+}
+
+final class ExampleSendable: ExampleProtocolSendable {
+	let value: Int
+	init(value: Int) {
+		self.value = value
+	}
+}
