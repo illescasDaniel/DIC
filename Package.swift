@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -20,9 +20,17 @@ let package = Package(
 		// Targets can depend on other targets in this package, and on products in packages this package depends on.
 		.target(
 			name: "DIC",
-			dependencies: []),
+			dependencies: [],
+			swiftSettings: [
+				.enableExperimentalFeature("StrictConcurrency"),
+				.unsafeFlags(["-swift-version", "6", "-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+			]),
 		.testTarget(
 			name: "DICTests",
-			dependencies: ["DIC"]),
-	]
+			dependencies: ["DIC"],
+			swiftSettings: [
+				.enableExperimentalFeature("StrictConcurrency"),
+				.unsafeFlags(["-swift-version", "6", "-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+			]),
+	],
 )
