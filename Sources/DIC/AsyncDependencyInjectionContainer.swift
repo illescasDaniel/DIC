@@ -44,7 +44,7 @@ public final class AsyncDependencyInjectionContainer {
 		if let value = await loadAsyncOrNil(type) {
 			return value
 		}
-		fatalError("[ERROR] DIC: error resolving dependency")
+		fatalError("[ERROR] DIC: error resolving dependency for \(type)")
 	}
 
 	public func loadAsyncOrNil<T>(_ type: T.Type = T.self) async -> T? {

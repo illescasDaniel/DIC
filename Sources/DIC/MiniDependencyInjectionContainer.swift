@@ -49,7 +49,7 @@ public final class MiniDependencyInjectionContainer {
 		} else if let objectBuilder = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)], let object = objectBuilder() as? T {
 			return object
 		}
-		fatalError("[ERROR] DIC: cannot find dependency")
+		fatalError("[ERROR] DIC: cannot find dependency for \(type)")
 	}
 
 	public func unregisterDependencies(keepingCapacity: Bool = false) {

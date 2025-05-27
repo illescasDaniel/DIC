@@ -61,7 +61,7 @@ public final class DependencyInjectionContainer {
 		if let object = loadOrNil(type) {
 			return object
 		}
-		fatalError("[ERROR] DIC: cannot find dependency")
+		fatalError("[ERROR] DIC: cannot find dependency for \(type)")
 	}
 	public func loadOrThrow<T>(_ type: T.Type = T.self) throws -> T {
 		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)], let value = singletonObject as? T {
