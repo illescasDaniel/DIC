@@ -24,58 +24,73 @@ import Foundation
 
 public typealias DICBuilder = DependencyInjectionContainerBuilder
 
-public final class DependencyInjectionContainerBuilder {
+public struct DependencyInjectionContainerBuilder {
 
-	private var objects: [ObjectIdentifier: () -> Any] = [:]
-	private var throwableObjects: [ObjectIdentifier: () throws -> Any] = [:]
-	private var singletonObjects: [ObjectIdentifier: Any] = [:]
+	private let storage: Storage
 
-	public init() {}
+	public init() {
+		self.storage = Storage()
+	}
+
+	// Private initializer for internal copying
+	private init(storage: Storage) {
+		self.storage = storage
+	}
 
 	@discardableResult
 	public func register<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) -> Self {
-		checkType(T.self)
-		objects[ObjectIdentifier(desiredType)] = objectBuilder
+		storage.checkType(T.self)
+		storage.objects[ObjectIdentifier(desiredType)] = objectBuilder
 		return self
 	}
+
 	@discardableResult
 	public func register<T>(_ objectBuilder: @autoclosure @escaping () -> T, as desiredType: T.Type = T.self) -> Self {
-		register(objectBuilder, as: desiredType)
-		return self
+		return register(objectBuilder, as: desiredType)
 	}
 
 	@discardableResult
 	public func registerThrowable<T>(_ objectBuilder: @escaping () throws -> T, as desiredType: T.Type = T.self) -> Self {
-		checkType(T.self)
-		throwableObjects[ObjectIdentifier(desiredType)] = objectBuilder
+		storage.checkType(T.self)
+		storage.throwableObjects[ObjectIdentifier(desiredType)] = objectBuilder
 		return self
 	}
+
 	@discardableResult
 	public func registerThrowable<T>(_ objectBuilder: @autoclosure @escaping () throws -> T, as desiredType: T.Type = T.self) -> Self {
-		registerThrowable(objectBuilder, as: desiredType)
-		return self
+		return registerThrowable(objectBuilder, as: desiredType)
 	}
 
 	@discardableResult
 	public func registerSingleton<T>(_ objectBuilder: () -> T, as desiredType: T.Type = T.self) -> Self {
-		singletonObjects[ObjectIdentifier(desiredType)] = objectBuilder()
+		storage.singletonObjects[ObjectIdentifier(desiredType)] = objectBuilder()
 		return self
 	}
+
 	@discardableResult
 	public func registerSingleton<T>(_ objectBuilder: @autoclosure () -> T, as desiredType: T.Type = T.self) -> Self {
-		registerSingleton(objectBuilder, as: desiredType)
-		return self
+		return registerSingleton(objectBuilder, as: desiredType)
 	}
 
 	public func build() -> ImmutableDependencyInjectionContainer {
 		ImmutableDependencyInjectionContainer(
-			objects: objects,
-			throwableObjects: throwableObjects,
-			singletonObjects: singletonObjects
+			objects: storage.objects,
+			throwableObjects: storage.throwableObjects,
+			singletonObjects: storage.singletonObjects
 		)
 	}
+}
 
-	private func checkType<T>(_ type: T.Type) {
+// MARK: - Private Storage Class
+
+private final class Storage {
+	var objects: [ObjectIdentifier: () -> Any] = [:]
+	var throwableObjects: [ObjectIdentifier: () throws -> Any] = [:]
+	var singletonObjects: [ObjectIdentifier: Any] = [:]
+
+	init() {}
+
+	func checkType<T>(_ type: T.Type) {
 		#if DEBUG
 		let name = String(describing: type)
 		if name.contains(" async ") {
