@@ -50,10 +50,10 @@ public final class DependencyInjectionContainer {
 		registerThrowable(objectBuilder, as: desiredType)
 	}
 
-	public func registerSingleton<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) {
+	public func registerSingleton<T>(_ objectBuilder: () -> T, as desiredType: T.Type = T.self) {
 		singletonObjects[ObjectIdentifier(desiredType)] = objectBuilder()
 	}
-	public func registerSingleton<T>(_ objectBuilder: @autoclosure @escaping () -> T, as desiredType: T.Type = T.self) {
+	public func registerSingleton<T>(_ objectBuilder: @autoclosure () -> T, as desiredType: T.Type = T.self) {
 		registerSingleton(objectBuilder, as: desiredType)
 	}
 

@@ -57,12 +57,12 @@ public final class DependencyInjectionContainerBuilder {
 	}
 
 	@discardableResult
-	public func registerSingleton<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) -> Self {
+	public func registerSingleton<T>(_ objectBuilder: () -> T, as desiredType: T.Type = T.self) -> Self {
 		singletonObjects[ObjectIdentifier(desiredType)] = objectBuilder()
 		return self
 	}
 	@discardableResult
-	public func registerSingleton<T>(_ objectBuilder: @autoclosure @escaping () -> T, as desiredType: T.Type = T.self) -> Self {
+	public func registerSingleton<T>(_ objectBuilder: @autoclosure () -> T, as desiredType: T.Type = T.self) -> Self {
 		registerSingleton(objectBuilder, as: desiredType)
 		return self
 	}
