@@ -1,10 +1,11 @@
+
 import XCTest
 @testable import DIC
 
-final class DICBuilderTests: XCTestCase {
+final class DICActorBuilderTests: XCTestCase {
 
-	func testMultipleRegister() {
-		let diContainer = DICBuilder()
+	func testMultipleRegister() async {
+		let diContainer = await DICActorBuilder()
 			.register {
 				Example1(value: 1)
 			}
@@ -30,8 +31,8 @@ final class DICBuilderTests: XCTestCase {
 		XCTAssertEqual(example3_1.value, 20)
 	}
 
-	func testSaveLoadWithClosureMini() {
-		let diContainer = DICBuilder()
+	func testSaveLoadWithClosureMini() async {
+		let diContainer = await DICActorBuilder()
 			.register {
 				Example1(value: 1)
 			}
@@ -49,8 +50,8 @@ final class DICBuilderTests: XCTestCase {
 		XCTAssertEqual(data2.value, 1)
 	}
 
-	func testSaveLoadWithSingletonClassAutoclosureMini() {
-		let diContainer = DICBuilder()
+	func testSaveLoadWithSingletonClassAutoclosureMini() async {
+		let diContainer = await DICActorBuilder()
 			.registerSingleton(Example1(value: 1))
 			.build()
 
@@ -68,8 +69,8 @@ final class DICBuilderTests: XCTestCase {
 		XCTAssertEqual(data2.value, 90)
 	}
 
-	func testSaveLoadWithSingletonClassWithClosureMini() {
-		let diContainer = DICBuilder()
+	func testSaveLoadWithSingletonClassWithClosureMini() async {
+		let diContainer = await DICActorBuilder()
 			.registerSingleton {
 				Example1(value: 1)
 			}
@@ -89,8 +90,8 @@ final class DICBuilderTests: XCTestCase {
 		XCTAssertEqual(data2.value, 90)
 	}
 
-	func testSaveLoadWithAutoclosureMini() {
-		let diContainer = DICBuilder()
+	func testSaveLoadWithAutoclosureMini() async {
+		let diContainer = await DICActorBuilder()
 			.register(Example1(value: 2))
 			.build()
 
@@ -105,8 +106,8 @@ final class DICBuilderTests: XCTestCase {
 		XCTAssertEqual(data2.value, 2)
 	}
 
-	func testProtocolSaveAndLoadMini() {
-		let diContainer = DICBuilder()
+	func testProtocolSaveAndLoadMini() async {
+		let diContainer = await DICActorBuilder()
 			.register({ Example3(value: 3) }, as: ExampleProtocol.self)
 			.build()
 
@@ -116,8 +117,8 @@ final class DICBuilderTests: XCTestCase {
 		XCTAssertEqual(exampleProtocolValue_1.value, 3)
 	}
 
-	func testProtocolSaveAndLoadAutoclosureMini() {
-		let diContainer = DICBuilder()
+	func testProtocolSaveAndLoadAutoclosureMini() async {
+		let diContainer = await DICActorBuilder()
 			.register(Example3(value: 3), as: ExampleProtocol.self)
 			.build()
 
@@ -127,15 +128,15 @@ final class DICBuilderTests: XCTestCase {
 		XCTAssertEqual(exampleProtocolValue_1.value, 3)
 	}
 
-	func testDependenciesMethodMini() {
-		let builder = DICBuilder()
-		var diContainer = builder.build()
+	func testDependenciesMethodMini() async {
+		let builder = DICActorBuilder()
+		var diContainer = await builder.build()
 
 		// Note: This test needs to be updated since we no longer expose 'objects' publicly
 		// Instead, we can test by trying to load a dependency that doesn't exist
 		XCTAssertNil(diContainer.loadOrNil(Example1.self))
 
-		let diContainerWithDeps = DICBuilder()
+		let diContainerWithDeps = await DICActorBuilder()
 			.register(Example3(value: 3), as: ExampleProtocol.self)
 			.build()
 

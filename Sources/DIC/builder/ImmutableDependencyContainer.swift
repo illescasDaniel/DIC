@@ -28,18 +28,18 @@ public struct ImmutableDependencyInjectionContainer {
 		case cannotFindDependency
 	}
 
-	public let objects: [ObjectIdentifier: () -> Any]
-	public let throwableObjects: [ObjectIdentifier: () throws -> Any]
-	public let singletonObjects: [ObjectIdentifier: Any]
+	private let storage: ImmutableStorage
 
 	internal init(
 		objects: [ObjectIdentifier: () -> Any],
 		throwableObjects: [ObjectIdentifier: () throws -> Any],
 		singletonObjects: [ObjectIdentifier: Any]
 	) {
-		self.objects = objects
-		self.throwableObjects = throwableObjects
-		self.singletonObjects = singletonObjects
+		self.storage = ImmutableStorage(
+			objects: objects,
+			throwableObjects: throwableObjects,
+			singletonObjects: singletonObjects
+		)
 	}
 
 	public func load<T>(_ type: T.Type = T.self) -> T {
@@ -53,13 +53,16 @@ public struct ImmutableDependencyInjectionContainer {
 		let id = ObjectIdentifier(type)
 		let optionalID = ObjectIdentifier(Optional<T>.self)
 
-		if let obj = singletonObjects[id] ?? singletonObjects[optionalID], let value = obj as? T {
+		if let obj = storage.singletonObjects[id] ?? storage.singletonObjects[optionalID],
+		   let value = obj as? T {
 			return value
 		}
-		if let factory = objects[id] ?? objects[optionalID], let value = factory() as? T {
+		if let factory = storage.objects[id] ?? storage.objects[optionalID],
+		   let value = factory() as? T {
 			return value
 		}
-		if let factory = throwableObjects[id] ?? throwableObjects[optionalID], let value = try factory() as? T {
+		if let factory = storage.throwableObjects[id] ?? storage.throwableObjects[optionalID],
+		   let value = try factory() as? T {
 			return value
 		}
 		throw InjectionLoadError.cannotFindDependency
@@ -69,13 +72,14 @@ public struct ImmutableDependencyInjectionContainer {
 		let id = ObjectIdentifier(type)
 		let optionalID = ObjectIdentifier(Optional<T>.self)
 
-		if let obj = singletonObjects[id] ?? singletonObjects[optionalID], let value = obj as? T {
+		if let obj = storage.singletonObjects[id] ?? storage.singletonObjects[optionalID],
+		   let value = obj as? T {
 			return value
 		}
-		if let factory = objects[id] ?? objects[optionalID] {
+		if let factory = storage.objects[id] ?? storage.objects[optionalID] {
 			return factory() as? T
 		}
-		if let factory = throwableObjects[id] ?? throwableObjects[optionalID] {
+		if let factory = storage.throwableObjects[id] ?? storage.throwableObjects[optionalID] {
 			return try? factory() as? T
 		}
 		return nil

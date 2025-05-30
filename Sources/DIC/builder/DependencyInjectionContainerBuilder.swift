@@ -80,24 +80,3 @@ public struct DependencyInjectionContainerBuilder {
 		)
 	}
 }
-
-// MARK: - Private Storage Class
-
-private final class Storage {
-	var objects: [ObjectIdentifier: () -> Any] = [:]
-	var throwableObjects: [ObjectIdentifier: () throws -> Any] = [:]
-	var singletonObjects: [ObjectIdentifier: Any] = [:]
-
-	init() {}
-
-	func checkType<T>(_ type: T.Type) {
-		#if DEBUG
-		let name = String(describing: type)
-		if name.contains(" async ") {
-			fatalError("[ERROR] DIC: async type detected: \"\(name)\". Use an async container.")
-		} else if name.starts(with: "(") {
-			print("[WARNING] DIC: your dependency type is a function: \"\(name)\". Are you sure that's correct?")
-		}
-		#endif
-	}
-}
