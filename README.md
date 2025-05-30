@@ -24,6 +24,39 @@ XCTAssertEqual(example1_1.value, 1)
 diContainer.register(Example1(value: 2))
 ```
 
+## Basic example using DICBuilder:
+```swift
+// Build your dependency container using the builder
+let diContainer = DICBuilder()
+    .register {
+        Example1(value: 1)
+    }
+    .build()
+
+// load it (building it each time)
+let example1: Example1 = diContainer.load()
+XCTAssertEqual(example1.value, 1)
+    // or like this:
+let example1_1 = diContainer.load(Example1.self)
+XCTAssertEqual(example1_1.value, 1)
+```
+
+```swift
+// You can also do this, which will use an autoclosure (so it will NOT create an object right now)
+let diContainer = DICBuilder()
+    .register(Example1(value: 2))
+    .build()
+```
+
+```swift
+// You can chain multiple registrations and then build once
+let diContainer = DICBuilder()
+    .register { Example1(value: 1) }
+    .register { Example2(name: "test") }
+    .registerSingleton { DatabaseService() }
+    .build()
+```
+
 ## Save dependencies as protocol types
 
 ```swift
@@ -85,3 +118,29 @@ to
 ```swift
 MyView(dependency: diContainer.load())
 ```
+
+## Why use DICBuilder instead of DependencyInjectionContainer?
+
+`DICBuilder` provides several advantages over the original mutable `DependencyInjectionContainer`:
+
+### 🔒 **Thread Safety**
+- **DICBuilder**: All registration operations are thread-safe using atomic operations
+- **DependencyInjectionContainer**: Direct dictionary mutations are not thread-safe
+
+### 🚀 **Performance** 
+- **DICBuilder**: Built container is immutable, allowing lock-free concurrent reads
+- **DependencyInjectionContainer**: Mutable state may require synchronization for safe concurrent access
+
+### 🛡️ **Immutability**
+- **DICBuilder**: Once built, the container cannot be modified (safer, more predictable)
+- **DependencyInjectionContainer**: Can be modified at any time, potentially causing runtime issues
+
+### 🔄 **Clear Lifecycle**
+- **DICBuilder**: Separates building phase (mutable) from usage phase (immutable)
+- **DependencyInjectionContainer**: Mixed concerns - can register and resolve simultaneously
+
+### 🧩 **Fluent API**
+- **DICBuilder**: Clean method chaining for configuration
+- **DependencyInjectionContainer**: Requires separate method calls for each registration
+
+**Recommendation**: Use `DICBuilder` for new projects, especially when thread safety and immutability are important.
