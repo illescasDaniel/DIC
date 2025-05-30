@@ -32,15 +32,10 @@ public struct DependencyInjectionContainerBuilder {
 		self.storage = Storage()
 	}
 
-	// Private initializer for internal copying
-	private init(storage: Storage) {
-		self.storage = storage
-	}
-
 	@discardableResult
 	public func register<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) -> Self {
 		storage.checkType(T.self)
-		storage.objects[ObjectIdentifier(desiredType)] = objectBuilder
+		storage.setObject(objectBuilder, for: desiredType)
 		return self
 	}
 
@@ -52,7 +47,7 @@ public struct DependencyInjectionContainerBuilder {
 	@discardableResult
 	public func registerThrowable<T>(_ objectBuilder: @escaping () throws -> T, as desiredType: T.Type = T.self) -> Self {
 		storage.checkType(T.self)
-		storage.throwableObjects[ObjectIdentifier(desiredType)] = objectBuilder
+		storage.setThrowableObject(objectBuilder, for: desiredType)
 		return self
 	}
 
@@ -63,7 +58,9 @@ public struct DependencyInjectionContainerBuilder {
 
 	@discardableResult
 	public func registerSingleton<T>(_ objectBuilder: () -> T, as desiredType: T.Type = T.self) -> Self {
-		storage.singletonObjects[ObjectIdentifier(desiredType)] = objectBuilder()
+		storage.checkType(T.self)
+		let instance = objectBuilder()
+		storage.setSingletonObject(instance, for: desiredType)
 		return self
 	}
 

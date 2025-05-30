@@ -1,31 +1,41 @@
-// The MIT License (MIT)
-//
-// Copyright (c) 2025 Daniel Illescas Romero
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+import Foundation
 
-internal final class Storage {
-	var objects: [ObjectIdentifier: () -> Any] = [:]
-	var throwableObjects: [ObjectIdentifier: () throws -> Any] = [:]
-	var singletonObjects: [ObjectIdentifier: Any] = [:]
+internal struct Storage {
+
+	private let atomicData = Atomic(StorageData())
 
 	init() {}
+
+	// Thread-safe getters - always return current snapshot
+	var objects: [ObjectIdentifier: () -> Any] {
+		atomicData.value.objects
+	}
+
+	var throwableObjects: [ObjectIdentifier: () throws -> Any] {
+		atomicData.value.throwableObjects
+	}
+
+	var singletonObjects: [ObjectIdentifier: Any] {
+		atomicData.value.singletonObjects
+	}
+
+	func setObject<T>(_ builder: @escaping () -> T, for type: T.Type) {
+		atomicData.modify { currentData in
+			currentData.addingObject(builder, for: type)
+		}
+	}
+
+	func setThrowableObject<T>(_ builder: @escaping () throws -> T, for type: T.Type) {
+		atomicData.modify { currentData in
+			currentData.addingThrowableObject(builder, for: type)
+		}
+	}
+
+	func setSingletonObject<T>(_ object: T, for type: T.Type) {
+		atomicData.modify { currentData in
+			currentData.addingSingletonObject(object, for: type)
+		}
+	}
 
 	func checkType<T>(_ type: T.Type) {
 		#if DEBUG
@@ -36,5 +46,73 @@ internal final class Storage {
 			print("[WARNING] DIC: your dependency type is a function: \"\(name)\". Are you sure that's correct?")
 		}
 		#endif
+	}
+}
+
+private final class Atomic<T> {
+	private var _value: T
+	private let lock = NSLock()
+
+	init(_ value: T) {
+		_value = value
+	}
+
+	var value: T {
+		lock.lock()
+		defer { lock.unlock() }
+		return _value
+	}
+
+	func modify(_ transform: (T) -> T) {
+		lock.lock()
+		defer { lock.unlock() }
+		_value = transform(_value)
+	}
+}
+
+private struct StorageData {
+	let objects: [ObjectIdentifier: () -> Any]
+	let throwableObjects: [ObjectIdentifier: () throws -> Any]
+	let singletonObjects: [ObjectIdentifier: Any]
+
+	init(
+		objects: [ObjectIdentifier: () -> Any] = [:],
+		throwableObjects: [ObjectIdentifier: () throws -> Any] = [:],
+		singletonObjects: [ObjectIdentifier: Any] = [:]
+	) {
+		self.objects = objects
+		self.throwableObjects = throwableObjects
+		self.singletonObjects = singletonObjects
+	}
+
+	// Copy-on-write methods that return new instances
+	func addingObject<T>(_ builder: @escaping () -> T, for type: T.Type) -> StorageData {
+		var newObjects = objects
+		newObjects[ObjectIdentifier(type)] = builder
+		return StorageData(
+			objects: newObjects,
+			throwableObjects: throwableObjects,
+			singletonObjects: singletonObjects
+		)
+	}
+
+	func addingThrowableObject<T>(_ builder: @escaping () throws -> T, for type: T.Type) -> StorageData {
+		var newThrowableObjects = throwableObjects
+		newThrowableObjects[ObjectIdentifier(type)] = builder
+		return StorageData(
+			objects: objects,
+			throwableObjects: newThrowableObjects,
+			singletonObjects: singletonObjects
+		)
+	}
+
+	func addingSingletonObject<T>(_ object: T, for type: T.Type) -> StorageData {
+		var newSingletonObjects = singletonObjects
+		newSingletonObjects[ObjectIdentifier(type)] = object
+		return StorageData(
+			objects: objects,
+			throwableObjects: throwableObjects,
+			singletonObjects: newSingletonObjects
+		)
 	}
 }

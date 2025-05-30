@@ -30,6 +30,33 @@ final class DICBuilderTests: XCTestCase {
 		XCTAssertEqual(example3_1.value, 20)
 	}
 
+	func testMultipleRegister2() {
+		let diBuilder = DICBuilder()
+		diBuilder.register {
+			Example1(value: 1)
+		}
+		diBuilder.register {
+			Example3(value: 20)
+		}
+		let diContainer = diBuilder.build()
+
+		let example1: Example1 = diContainer.load()
+		XCTAssertEqual(example1.value, 1)
+		example1.value = 90
+		let example1_1 = diContainer.load(Example1.self)
+		XCTAssertEqual(example1_1.value, 1)
+
+		let data1: Example1 = diContainer.load()
+		XCTAssertEqual(data1.value, 1)
+		let data2 = diContainer.load(Example1.self)
+		XCTAssertEqual(data2.value, 1)
+
+		let example3: Example3 = diContainer.load()
+		XCTAssertEqual(example3.value, 20)
+		let example3_1 = diContainer.load(Example3.self)
+		XCTAssertEqual(example3_1.value, 20)
+	}
+
 	func testSaveLoadWithClosureMini() {
 		let diContainer = DICBuilder()
 			.register {
@@ -129,7 +156,7 @@ final class DICBuilderTests: XCTestCase {
 
 	func testDependenciesMethodMini() {
 		let builder = DICBuilder()
-		var diContainer = builder.build()
+		let diContainer = builder.build()
 
 		// Note: This test needs to be updated since we no longer expose 'objects' publicly
 		// Instead, we can test by trying to load a dependency that doesn't exist
