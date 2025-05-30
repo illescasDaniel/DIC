@@ -22,7 +22,7 @@
 
 import Foundation
 
-public final class DependencyInjectionContainer {
+public final actor DependencyInjectionContainerActor {
 
 	public enum InjectionLoadError: Error {
 		case cannotFindDependency
@@ -31,14 +31,10 @@ public final class DependencyInjectionContainer {
 	private var objects: [ObjectIdentifier: () -> Any] = [:]
 	private var objectsThatCanThrow: [ObjectIdentifier: () throws -> Any] = [:]
 	private var singletonObjects: [ObjectIdentifier: Any] = [:]
-	private let lock = NSLock()
 
 	public init() {}
 
 	public func register<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) {
-		lock.lock()
-		defer { lock.unlock() }
-
 		checkType(T.self)
 		objects[ObjectIdentifier(desiredType)] = objectBuilder
 	}
@@ -47,9 +43,6 @@ public final class DependencyInjectionContainer {
 	}
 
 	public func registerThrowable<T>(_ objectBuilder: @escaping () throws -> T, as desiredType: T.Type = T.self) {
-		lock.lock()
-		defer { lock.unlock() }
-
 		checkType(T.self)
 		objectsThatCanThrow[ObjectIdentifier(desiredType)] = objectBuilder
 	}
@@ -58,68 +51,50 @@ public final class DependencyInjectionContainer {
 	}
 
 	public func registerSingleton<T>(_ objectBuilder: () -> T, as desiredType: T.Type = T.self) {
-		lock.lock()
-		defer { lock.unlock() }
-
 		singletonObjects[ObjectIdentifier(desiredType)] = objectBuilder()
 	}
 	public func registerSingleton<T>(_ objectBuilder: @autoclosure () -> T, as desiredType: T.Type = T.self) {
 		registerSingleton(objectBuilder, as: desiredType)
 	}
 
-	public func load<T>(_ type: T.Type = T.self) -> T {
-		if let object = loadOrNil(type) {
-			return object
-		}
-		fatalError("[ERROR] DIC: cannot find dependency")
-	}
-	public func loadOrThrow<T>(_ type: T.Type = T.self) throws -> T {
-		lock.lock()
-		defer { lock.unlock() }
-
-		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)], let value = singletonObject as? T {
-			return value
-		} else if let f = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)], let value = f() as? T {
-			return value
-		} else if let f = objectsThatCanThrow[ObjectIdentifier(T.self)] ?? objectsThatCanThrow[ObjectIdentifier(Optional<T>.self)], let value = try f() as? T {
-			return value
-		}
-		throw InjectionLoadError.cannotFindDependency
-	}
-	public func loadOrNil<T>(_ type: T.Type = T.self) -> T? {
-		lock.lock()
-		defer { lock.unlock() }
-
-		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)], let value = singletonObject as? T {
-			return value
-		} else if let objectBuilder = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)] {
-			return objectBuilder() as? T
-		} else if let objectBuilder = objectsThatCanThrow[ObjectIdentifier(T.self)] ?? objectsThatCanThrow[ObjectIdentifier(Optional<T>.self)] {
-			return (try? objectBuilder()) as? T
-		}
-		return nil
-	}
-
 	public func unregisterDependencies(keepingCapacity: Bool = false) {
-		lock.lock()
-		defer { lock.unlock() }
-
 		objects.removeAll(keepingCapacity: keepingCapacity)
 		objectsThatCanThrow.removeAll(keepingCapacity: keepingCapacity)
 	}
 
-	public func dependencies() -> [ObjectIdentifier: () -> Any] {
-		lock.lock()
-		defer { lock.unlock() }
-
-		return objects
+	public func dependencies() -> WrappedValue<[ObjectIdentifier: () -> Any]> {
+		return WrappedValue(objects)
 	}
 
-	public func throwableDependencies() -> [ObjectIdentifier: () throws -> Any] {
-		lock.lock()
-		defer { lock.unlock() }
-		
-		return objectsThatCanThrow
+	public func throwableDependencies() -> WrappedValue<[ObjectIdentifier: () throws -> Any]> {
+		return WrappedValue(objectsThatCanThrow)
+	}
+
+	public func load<T>(_ type: T.Type) -> WrappedValue<T> {
+		if let object: WrappedValue<T> = loadOrNil(type) {
+			return object
+		}
+		fatalError("[ERROR] DIC: cannot find dependency")
+	}
+	public func loadOrThrow<T>(_ type: T.Type = T.self) throws -> WrappedValue<T> {
+		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)], let value = singletonObject as? T {
+			return WrappedValue(value)
+		} else if let f = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)], let value = f() as? T {
+			return WrappedValue(value)
+		} else if let f = objectsThatCanThrow[ObjectIdentifier(T.self)] ?? objectsThatCanThrow[ObjectIdentifier(Optional<T>.self)], let value = try f() as? T {
+			return WrappedValue(value)
+		}
+		throw InjectionLoadError.cannotFindDependency
+	}
+	public func loadOrNil<T>(_ type: T.Type) -> WrappedValue<T>? {
+		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)], let value = singletonObject as? T {
+			return WrappedValue(value)
+		} else if let objectBuilder = objects[ObjectIdentifier(T.self)] ?? objects[ObjectIdentifier(Optional<T>.self)] {
+			return (objectBuilder() as? T).map { WrappedValue($0) }
+		} else if let objectBuilder = objectsThatCanThrow[ObjectIdentifier(T.self)] ?? objectsThatCanThrow[ObjectIdentifier(Optional<T>.self)] {
+			return ((try? objectBuilder()) as? T).map { WrappedValue($0) }
+		}
+		return nil
 	}
 
 	//

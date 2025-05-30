@@ -21,28 +21,28 @@
 // SOFTWARE.
 
 public actor SendableMiniDependencyInjectionContainer {
-	private var objects: [ObjectIdentifier: @Sendable () -> Any] = [:]
-	private var singletonObjects: [ObjectIdentifier: Any] = [:]
+	private var objects: [ObjectIdentifier: @Sendable () -> Sendable] = [:]
+	private var singletonObjects: [ObjectIdentifier: Sendable] = [:]
 
 	public init() {}
 
-	public func register<T>(_ objectBuilder: @escaping @Sendable () -> T, as desiredType: T.Type = T.self) {
+	public func register<T: Sendable>(_ objectBuilder: @escaping @Sendable () -> T, as desiredType: T.Type = T.self) {
 		objects[ObjectIdentifier(desiredType)] = objectBuilder
 	}
 
-	public func register<T>(_ objectBuilder: @autoclosure @escaping @Sendable () -> T, as desiredType: T.Type = T.self) {
+	public func register<T: Sendable>(_ objectBuilder: @autoclosure @escaping @Sendable () -> T, as desiredType: T.Type = T.self) {
 		register(objectBuilder, as: desiredType)
 	}
 
-	public func registerSingleton<T>(_ objectBuilder: @escaping @Sendable () -> T, as desiredType: T.Type = T.self) {
+	public func registerSingleton<T: Sendable>(_ objectBuilder: @Sendable () -> T, as desiredType: T.Type = T.self) {
 		singletonObjects[ObjectIdentifier(desiredType)] = objectBuilder()
 	}
 
-	public func registerSingleton<T>(_ objectBuilder: @autoclosure @escaping @Sendable () -> T, as desiredType: T.Type = T.self) {
+	public func registerSingleton<T: Sendable>(_ objectBuilder: @autoclosure @Sendable () -> T, as desiredType: T.Type = T.self) {
 		registerSingleton(objectBuilder, as: desiredType)
 	}
 
-	public func load<T>(_ type: T.Type = T.self) -> T {
+	public func load<T: Sendable>(_ type: T.Type = T.self) -> T {
 		if let singletonObject = singletonObjects[ObjectIdentifier(T.self)] ?? singletonObjects[ObjectIdentifier(Optional<T>.self)],
 		   let object = singletonObject as? T {
 			return object
@@ -57,7 +57,7 @@ public actor SendableMiniDependencyInjectionContainer {
 		objects.removeAll(keepingCapacity: keepingCapacity)
 	}
 
-	public func dependencies() -> [ObjectIdentifier: @Sendable () -> Any] {
+	public func dependencies() -> [ObjectIdentifier: @Sendable () -> Sendable] {
 		return objects
 	}
 
