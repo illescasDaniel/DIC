@@ -22,7 +22,7 @@
 
 import Foundation
 
-public struct ImmutableDependencyInjectionContainer {
+public struct ImmutableDependencyInjectionContainer: Sendable {
 
 	public enum InjectionLoadError: Error {
 		case cannotFindDependency
