@@ -116,6 +116,55 @@ final class DICBuilderTests: XCTestCase {
 		XCTAssertEqual(data2.value, 90)
 	}
 
+	func testReferenciesDependenciesInOthers() throws {
+		var diContainer: ImmutableDependencyInjectionContainer?
+		diContainer = DICBuilder()
+			.register {
+				Example1(value: 1)
+			}
+			.register {
+				Example2(example1: diContainer!.load())
+			}
+			.build()
+
+		let validContainer = try XCTUnwrap(diContainer)
+		let example2: Example2 = validContainer.load()
+		XCTAssertEqual(example2.example1.value, 1)
+	}
+
+	func testMixedReferenciesDependenciesInOthers() throws {
+		var diContainer: ImmutableDependencyInjectionContainer?
+		diContainer = DICBuilder()
+			.register {
+				Example1(value: 1)
+			}
+			.registerSingleton {
+				Example2(example1: diContainer!.load())
+			}
+			.build()
+
+		let validContainer = try XCTUnwrap(diContainer)
+		let example2: Example2 = validContainer.load()
+		XCTAssertEqual(example2.example1.value, 1)
+	}
+
+	func testMultipleSingletonsDependencies() throws {
+		var diContainer: ImmutableDependencyInjectionContainer?
+		diContainer = DICBuilder()
+			.registerSingleton {
+				Example1(value: 1)
+			}
+			.registerSingleton {
+				Example2(example1: diContainer!.load())
+			}
+			.build()
+
+		let validContainer = try XCTUnwrap(diContainer)
+		let example2: Example2 = validContainer.load()
+		XCTAssertEqual(example2.example1.value, 1)
+	}
+
+
 	func testSaveLoadWithAutoclosureMini() {
 		let diContainer = DICBuilder()
 			.register(Example1(value: 2))

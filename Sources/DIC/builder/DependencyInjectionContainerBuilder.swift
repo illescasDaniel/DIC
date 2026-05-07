@@ -57,17 +57,17 @@ public struct DependencyInjectionContainerBuilder {
 	}
 
 	@discardableResult
-	public func registerSingleton<T>(_ objectBuilder: () -> T, as desiredType: T.Type = T.self) -> Self {
+	public func registerSingleton<T>(_ objectBuilder: @escaping () -> T, as desiredType: T.Type = T.self) -> Self {
 		storage.checkType(T.self)
-		let instance = objectBuilder()
-		storage.setSingletonObject(instance, for: desiredType)
+		storage.setSingletonObject(objectBuilder, for: desiredType)
 		return self
 	}
 
 	@discardableResult
-	public func registerSingleton<T>(_ objectBuilder: @autoclosure () -> T, as desiredType: T.Type = T.self) -> Self {
+	public func registerSingleton<T>(_ objectBuilder: @autoclosure @escaping () -> T, as desiredType: T.Type = T.self) -> Self {
 		return registerSingleton(objectBuilder, as: desiredType)
 	}
+
 
 	public func build() -> ImmutableDependencyInjectionContainer {
 		ImmutableDependencyInjectionContainer(

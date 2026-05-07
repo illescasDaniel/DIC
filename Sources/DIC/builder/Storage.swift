@@ -1,5 +1,26 @@
 import Foundation
 
+internal final class LazySingleton: @unchecked Sendable {
+	private let builder: () -> Any
+	private var instance: Any?
+	private let lock = NSLock()
+
+	init(builder: @escaping () -> Any) {
+		self.builder = builder
+	}
+
+	func value() -> Any {
+		lock.lock()
+		defer { lock.unlock() }
+		if let instance = instance {
+			return instance
+		}
+		let newInstance = builder()
+		instance = newInstance
+		return newInstance
+	}
+}
+
 internal struct Storage {
 
 	private let atomicData = Atomic(StorageData())
@@ -15,7 +36,7 @@ internal struct Storage {
 		atomicData.value.throwableObjects
 	}
 
-	var singletonObjects: [ObjectIdentifier: Any] {
+	var singletonObjects: [ObjectIdentifier: LazySingleton] {
 		atomicData.value.singletonObjects
 	}
 
@@ -31,9 +52,9 @@ internal struct Storage {
 		}
 	}
 
-	func setSingletonObject<T>(_ object: T, for type: T.Type) {
+	func setSingletonObject<T>(_ builder: @escaping () -> T, for type: T.Type) {
 		atomicData.modify { currentData in
-			currentData.addingSingletonObject(object, for: type)
+			currentData.addingSingletonObject(LazySingleton(builder: builder), for: type)
 		}
 	}
 
@@ -73,12 +94,12 @@ private final class Atomic<T> {
 private struct StorageData {
 	let objects: [ObjectIdentifier: () -> Any]
 	let throwableObjects: [ObjectIdentifier: () throws -> Any]
-	let singletonObjects: [ObjectIdentifier: Any]
+	let singletonObjects: [ObjectIdentifier: LazySingleton]
 
 	init(
 		objects: [ObjectIdentifier: () -> Any] = [:],
 		throwableObjects: [ObjectIdentifier: () throws -> Any] = [:],
-		singletonObjects: [ObjectIdentifier: Any] = [:]
+		singletonObjects: [ObjectIdentifier: LazySingleton] = [:]
 	) {
 		self.objects = objects
 		self.throwableObjects = throwableObjects
@@ -106,9 +127,9 @@ private struct StorageData {
 		)
 	}
 
-	func addingSingletonObject<T>(_ object: T, for type: T.Type) -> StorageData {
+	func addingSingletonObject(_ lazySingleton: LazySingleton, for type: Any.Type) -> StorageData {
 		var newSingletonObjects = singletonObjects
-		newSingletonObjects[ObjectIdentifier(type)] = object
+		newSingletonObjects[ObjectIdentifier(type)] = lazySingleton
 		return StorageData(
 			objects: objects,
 			throwableObjects: throwableObjects,
@@ -116,3 +137,4 @@ private struct StorageData {
 		)
 	}
 }
+

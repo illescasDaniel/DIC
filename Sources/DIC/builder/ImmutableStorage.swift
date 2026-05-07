@@ -23,15 +23,16 @@
 internal struct ImmutableStorage {
 	let objects: [ObjectIdentifier: () -> Any]
 	let throwableObjects: [ObjectIdentifier: () throws -> Any]
-	let singletonObjects: [ObjectIdentifier: Any]
+	let singletonObjects: [ObjectIdentifier: LazySingleton]
 
 	init(
 		objects: [ObjectIdentifier: () -> Any],
 		throwableObjects: [ObjectIdentifier: () throws -> Any],
-		singletonObjects: [ObjectIdentifier: Any]
+		singletonObjects: [ObjectIdentifier: LazySingleton]
 	) {
 		self.objects = objects
 		self.throwableObjects = throwableObjects
 		self.singletonObjects = singletonObjects
 	}
 }
+

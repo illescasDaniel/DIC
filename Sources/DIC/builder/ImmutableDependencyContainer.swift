@@ -33,8 +33,9 @@ public struct ImmutableDependencyInjectionContainer: Sendable {
 	internal init(
 		objects: [ObjectIdentifier: () -> Any],
 		throwableObjects: [ObjectIdentifier: () throws -> Any],
-		singletonObjects: [ObjectIdentifier: Any]
+		singletonObjects: [ObjectIdentifier: LazySingleton]
 	) {
+
 		self.storage = ImmutableStorage(
 			objects: objects,
 			throwableObjects: throwableObjects,
@@ -53,8 +54,8 @@ public struct ImmutableDependencyInjectionContainer: Sendable {
 		let id = ObjectIdentifier(type)
 		let optionalID = ObjectIdentifier(Optional<T>.self)
 
-		if let obj = storage.singletonObjects[id] ?? storage.singletonObjects[optionalID],
-		   let value = obj as? T {
+		if let lazyObj = storage.singletonObjects[id] ?? storage.singletonObjects[optionalID],
+		   let value = lazyObj.value() as? T {
 			return value
 		}
 		if let factory = storage.objects[id] ?? storage.objects[optionalID],
@@ -72,8 +73,8 @@ public struct ImmutableDependencyInjectionContainer: Sendable {
 		let id = ObjectIdentifier(type)
 		let optionalID = ObjectIdentifier(Optional<T>.self)
 
-		if let obj = storage.singletonObjects[id] ?? storage.singletonObjects[optionalID],
-		   let value = obj as? T {
+		if let lazyObj = storage.singletonObjects[id] ?? storage.singletonObjects[optionalID],
+		   let value = lazyObj.value() as? T {
 			return value
 		}
 		if let factory = storage.objects[id] ?? storage.objects[optionalID] {
@@ -84,4 +85,5 @@ public struct ImmutableDependencyInjectionContainer: Sendable {
 		}
 		return nil
 	}
+
 }

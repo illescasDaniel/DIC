@@ -24,3 +24,10 @@ class Example3: ExampleProtocol {
 		self.value = value
 	}
 }
+
+class Example2 {
+	let example1: Example1
+	init(example1: Example1) {
+		self.example1 = example1
+	}
+}
