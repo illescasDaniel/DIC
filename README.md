@@ -47,7 +47,7 @@ let DI2 = DICBuilder()
 		MyRepositoryImpl(myDataSource: DI2.load(MyDataSource.self)) as MyRepository
 	}
 	.register {
-		MyUseCase(myRepository: DI2.load(MyRepository.self))
+		MyUseCase(myRepository: DI2.load()) // this "load()" without arguments also works! :)
 	}
 	// etc
 	.build()
